@@ -1,4 +1,24 @@
-.venv/
+# macOS
 .DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
 .venv/
-.DS_Store
+.env
+.env.*
+
+# FastAPI generated data
+data/
+vector_index.json
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.turbo/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
