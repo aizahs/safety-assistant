@@ -82,21 +82,23 @@ export default function Home() {
         ` Uploaded: ${json.saved.join(", ")} | chunks: ${json.chunks}`
       );
     } catch (e: any) {
-      setUploadMsg(`❌ ${e?.message || "Upload failed"}`);
+      setUploadMsg(` ${e?.message || "Upload failed"}`);
     }
   }
 
   return (
     <main className="min-h-screen p-6 md:p-10 bg-gray-50">
       <div className="max-w-3xl mx-auto space-y-6">
+        {/* Header */}
         <header className="space-y-2">
           <h1 className="text-3xl font-bold text-gray-900">Safety Assistant</h1>
           <p className="text-gray-600">
-            Ask questions and get answers grounded in your ingested safety docs.
+            Ask questions and get answers grounded in your ingested safety
+            documents.
           </p>
         </header>
 
-        {/* New upload section */}
+        {/* Upload Section */}
         <section className="bg-white rounded-xl shadow p-4 md:p-6 space-y-3">
           <div className="text-sm font-semibold text-gray-700">Upload PDFs</div>
 
@@ -112,13 +114,13 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <label
               htmlFor="pdf-upload"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-50 active:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
+              className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-50"
             >
               Select PDFs
             </label>
 
             {files && files.length > 0 && (
-              <ul className="mt-2 text-sm text-gray-700 list-disc ml-5">
+              <ul className="text-sm text-gray-700 list-disc ml-5">
                 {Array.from(files).map((f) => (
                   <li key={f.name}>{f.name}</li>
                 ))}
@@ -128,7 +130,7 @@ export default function Home() {
             <button
               onClick={onUpload}
               disabled={!files || files.length === 0}
-              className="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-black active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
+              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black disabled:opacity-50"
             >
               Upload & Index
             </button>
@@ -141,7 +143,8 @@ export default function Home() {
           )}
         </section>
 
-        <div className="space-y-3">
+        {/* Ask Section */}
+        <section className="space-y-3">
           <label className="block text-sm font-semibold text-gray-700">
             Ask a question
           </label>
@@ -150,12 +153,11 @@ export default function Home() {
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             rows={3}
-            className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20"
-            placeholder="e.g. What PPE is required for grinding operations?"
+            className="w-full rounded-lg border border-gray-300 p-3 text-sm text-gray-900 focus:ring-2 focus:ring-gray-900/20"
           />
 
           <div className="flex items-center gap-3">
-            <label className="text-sm text-gray-600">
+            <label className="text-sm text-gray-700">
               Top K:
               <input
                 type="number"
@@ -168,37 +170,37 @@ export default function Home() {
             <button
               onClick={onAsk}
               disabled={loading}
-              className="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black disabled:opacity-50"
+              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black disabled:opacity-50"
             >
               {loading ? "Asking..." : "Ask"}
             </button>
           </div>
-        </div>
+        </section>
 
+        {/* Error */}
         {err && (
           <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
             {err}
           </div>
         )}
 
+        {/* Answer */}
         {data && (
-          <div className="rounded-lg bg-gray-50 p-4 space-y-3 text-sm">
+          <section className="rounded-lg bg-gray-50 p-4 space-y-4 text-sm text-gray-900">
             <div>
-              <div className="font-semibold">Answer</div>
-              <pre className="whitespace-pre-wrap text-gray-900">
-                {data.answer}
-              </pre>
+              <div className="font-semibold text-gray-900">Answer</div>
+              <pre className="whitespace-pre-wrap">{data.answer}</pre>
             </div>
 
             <div>
-              <div className="font-semibold">Sources</div>
+              <div className="font-semibold text-gray-900">Sources</div>
               <ul className="list-disc ml-5 text-gray-800">
                 {data.retrieved_sources.map((s) => (
                   <li key={s}>{s}</li>
                 ))}
               </ul>
             </div>
-          </div>
+          </section>
         )}
       </div>
     </main>
