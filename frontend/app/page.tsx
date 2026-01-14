@@ -79,7 +79,7 @@ export default function Home() {
 
       const json = await res.json();
       setUploadMsg(
-        `✅ Uploaded: ${json.saved.join(", ")} | chunks: ${json.chunks}`
+        ` Uploaded: ${json.saved.join(", ")} | chunks: ${json.chunks}`
       );
     } catch (e: any) {
       setUploadMsg(`❌ ${e?.message || "Upload failed"}`);
