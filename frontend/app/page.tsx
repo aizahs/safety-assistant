@@ -11,7 +11,6 @@ type AskResponse = {
 export default function Home() {
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
 
-  // ✅ move these INSIDE the component
   const [files, setFiles] = useState<FileList | null>(null);
   const [uploadMsg, setUploadMsg] = useState<string | null>(null);
 
@@ -142,12 +141,63 @@ export default function Home() {
           )}
         </section>
 
-        {/* Existing question/ask UI */}
-        <section className="bg-white rounded-xl shadow p-4 md:p-6 space-y-4">
-          {/* ... your existing question section unchanged ... */}
-        </section>
+        <div className="space-y-3">
+          <label className="block text-sm font-semibold text-gray-700">
+            Ask a question
+          </label>
 
-        {/* ... err + data sections unchanged ... */}
+          <textarea
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            rows={3}
+            className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20"
+            placeholder="e.g. What PPE is required for grinding operations?"
+          />
+
+          <div className="flex items-center gap-3">
+            <label className="text-sm text-gray-600">
+              Top K:
+              <input
+                type="number"
+                value={topK}
+                onChange={(e) => setTopK(Number(e.target.value))}
+                className="ml-2 w-16 rounded border border-gray-300 p-1 text-sm"
+              />
+            </label>
+
+            <button
+              onClick={onAsk}
+              disabled={loading}
+              className="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black disabled:opacity-50"
+            >
+              {loading ? "Asking..." : "Ask"}
+            </button>
+          </div>
+        </div>
+
+        {err && (
+          <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+            {err}
+          </div>
+        )}
+
+        {data && (
+          <div className="rounded-lg bg-gray-50 p-4 space-y-3 text-sm">
+            <div>
+              <div className="font-semibold">Answer</div>
+              <pre className="whitespace-pre-wrap">{data.answer}</pre>
+            </div>
+
+            <div>
+              <div className="font-semibold">Sources</div>
+              <ul className="list-disc ml-5">
+                {data.retrieved_sources.map((s) => (
+                  <li key={s}>{s}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
