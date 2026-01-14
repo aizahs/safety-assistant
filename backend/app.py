@@ -100,9 +100,10 @@ async def upload(files: list[UploadFile] = File(...)):
     global index
     index = build_index(DATA_DIR)
 
+    with open(INDEX_FILE, "w", encoding="utf-8") as f:
+        json.dump(index, f)
+
     return {"ok": True, "saved": saved, "chunks": len(index["texts"])}
-
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -158,6 +159,9 @@ def health():
 
 @app.post("/ask")
 def ask(req: AskReq):
+    global index
+    if index is None:
+        index = load_index()
     chunks = retrieve(req.question, req.top_k or 5)
     context = build_context(chunks)
     sources = sorted({c["meta"].get("source", "unknown") for c in chunks})
@@ -183,6 +187,9 @@ Return:
 
 @app.post("/task-to-jha")
 def task_to_jha(req: JHAReq):
+    global index
+    if index is None:
+        index = load_index()
     chunks = retrieve(req.task, req.top_k or 6)
     context = build_context(chunks)
     sources = sorted({c["meta"].get("source", "unknown") for c in chunks})
