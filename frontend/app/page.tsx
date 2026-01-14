@@ -135,7 +135,7 @@ export default function Home() {
           </div>
 
           {uploadMsg && (
-            <pre className="text-sm whitespace-pre-wrap bg-gray-500 p-3 rounded-lg">
+            <pre className="text-sm whitespace-pre-wrap bg-gray-100 text-gray-900 p-3 rounded-lg">
               {uploadMsg}
             </pre>
           )}
@@ -185,12 +185,14 @@ export default function Home() {
           <div className="rounded-lg bg-gray-50 p-4 space-y-3 text-sm">
             <div>
               <div className="font-semibold">Answer</div>
-              <pre className="whitespace-pre-wrap">{data.answer}</pre>
+              <pre className="whitespace-pre-wrap text-gray-900">
+                {data.answer}
+              </pre>
             </div>
 
             <div>
               <div className="font-semibold">Sources</div>
-              <ul className="list-disc ml-5">
+              <ul className="list-disc ml-5 text-gray-800">
                 {data.retrieved_sources.map((s) => (
                   <li key={s}>{s}</li>
                 ))}
