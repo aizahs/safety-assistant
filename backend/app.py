@@ -19,7 +19,7 @@ from ingest import build_index
 
 
 INDEX_FILE = "vector_index.json"
-GEMINI_MODEL = "models/gemini-flash-latest"  
+GEMINI_MODEL = "models/gemini-3-flash-preview"  
 VEC_DIMS = 512
 DATA_DIR = "data"
 

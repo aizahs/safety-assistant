@@ -11,7 +11,7 @@ type AskResponse = {
 export default function Home() {
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
 
-  // ✅ move these INSIDE the component
+
   const [files, setFiles] = useState<FileList | null>(null);
   const [uploadMsg, setUploadMsg] = useState<string | null>(null);
 
