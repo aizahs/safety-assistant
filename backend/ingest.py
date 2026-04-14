@@ -1,14 +1,20 @@
 import os
 import json
-import re
-import hashlib
-import math
+from dotenv import load_dotenv
+load_dotenv()
 
 import fitz  # PyMuPDF
+from google import genai
+from google.genai import types
 
 DATA_DIR = "data"
 OUT_FILE = "vector_index.json"
-VEC_DIMS = 512
+EMBED_MODEL = "models/gemini-embedding-001"
+
+api_key = os.environ.get("GEMINI_API_KEY")
+if not api_key:
+    raise RuntimeError("Missing GEMINI_API_KEY. Run: export GEMINI_API_KEY='...'")
+client = genai.Client(api_key=api_key)
 
 
 def read_pdf(path: str) -> str:
@@ -61,25 +67,13 @@ def chunk_text(text, chunk_size=900, overlap=150):
     return chunks
 
 
-def tokenize(text):
-    return re.findall(r"[a-zA-Z0-9']+", text.lower())
-
-
-def embed_text(text, dims=VEC_DIMS):
-    vec = [0.0] * dims
-    tokens = tokenize(text)
-    if not tokens:
-        return vec
-
-    for tok in tokens:
-        h = hashlib.md5(tok.encode("utf-8")).hexdigest()
-        idx = int(h, 16) % dims
-        vec[idx] += 1.0
-
-    norm = math.sqrt(sum(v * v for v in vec))
-    if norm > 0:
-        vec = [v / norm for v in vec]
-    return vec
+def embed_text(text: str) -> list[float]:
+    result = client.models.embed_content(
+        model=EMBED_MODEL,
+        contents=text,
+        config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT"),
+    )
+    return result.embeddings[0].values
 
 
 def build_index(data_dir=DATA_DIR):
@@ -98,15 +92,16 @@ def build_index(data_dir=DATA_DIR):
     if not texts:
         raise RuntimeError("No text found. Add .txt/.pdf files to data/ and retry.")
 
-    print("Embedding (pure python)...")
+    print("Embedding with Gemini text-embedding-004...")
     embeddings = []
     for i, t in enumerate(texts, start=1):
         embeddings.append(embed_text(t))
         if i % 25 == 0 or i == len(texts):
             print(f"Embedded {i}/{len(texts)}")
 
+    dim = len(embeddings[0]) if embeddings else 768
     index = {
-        "dim": VEC_DIMS,
+        "dim": dim,
         "texts": texts,
         "embeddings": embeddings,
         "metadata": metas,

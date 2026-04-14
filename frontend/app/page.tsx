@@ -13,22 +13,20 @@ export default function Home() {
 
   const [files, setFiles] = useState<FileList | null>(null);
   const [uploadMsg, setUploadMsg] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
 
-  const [question, setQuestion] = useState(
-    "What PPE is required for grinding operations?"
-  );
-  const [topK, setTopK] = useState(5);
+  const [question, setQuestion] = useState("");
+  const topK = 5;
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [data, setData] = useState<AskResponse | null>(null);
 
   const curl = useMemo(() => {
-    return `curl -X POST "${API_BASE}/ask" \\
-  -H "Content-Type: application/json" \\
-  -d '{"question":"${question.replaceAll('"', '\\"')}", "top_k": ${topK}}'`;
-  }, [API_BASE, question, topK]);
+    return `curl -X POST "${API_BASE}/ask" \\\n  -H "Content-Type: application/json" \\\n  -d '{"question":"${question.replaceAll('"', '\\"')}", "top_k": ${topK}}'`;
+  }, [API_BASE, question]);
 
   async function onAsk() {
+    if (!question.trim()) return;
     setLoading(true);
     setErr(null);
     setData(null);
@@ -56,6 +54,7 @@ export default function Home() {
 
   async function onUpload() {
     setUploadMsg(null);
+    setUploadSuccess(false);
     setErr(null);
 
     if (!files || files.length === 0) {
@@ -78,131 +77,194 @@ export default function Home() {
       }
 
       const json = await res.json();
-      setUploadMsg(
-        ` Uploaded: ${json.saved.join(", ")} | chunks: ${json.chunks}`
-      );
+      setUploadSuccess(true);
+      setUploadMsg(`${json.saved.join(", ")} — ${json.chunks} chunks indexed`);
     } catch (e: any) {
-      setUploadMsg(` ${e?.message || "Upload failed"}`);
+      setUploadMsg(e?.message || "Upload failed");
     }
   }
 
   return (
-    <main className="min-h-screen p-6 md:p-10 bg-gray-50">
-      <div className="max-w-3xl mx-auto space-y-6">
-        {/* Header */}
-        <header className="space-y-2">
-          <h1 className="text-3xl font-bold text-gray-900">Safety Assistant</h1>
-          <p className="text-gray-600">
-            Ask questions and get answers grounded in your ingested safety
-            documents.
-          </p>
-        </header>
+    <div className="min-h-screen bg-white font-sans">
 
-        {/* Upload Section */}
-        <section className="bg-white rounded-xl shadow p-4 md:p-6 space-y-3">
-          <div className="text-sm font-semibold text-gray-700">Upload PDFs</div>
+      {/* Top Nav */}
+      <nav className="bg-[#111111] px-8 py-4 flex items-center">
+        <span className="text-white font-black text-xl tracking-widest uppercase">Safety Assistant</span>
+        <div className="w-2 h-2 rounded-full bg-[#C8102E] mb-3 ml-1" />
+      </nav>
 
-          <input
-            id="pdf-upload"
-            type="file"
-            accept="application/pdf"
-            multiple
-            className="hidden"
-            onChange={(e) => setFiles(e.target.files)}
-          />
+      {/* Hero Banner */}
+      <div className="relative bg-[#1a1a1a] overflow-hidden">
+        {/* Red diagonal accent */}
+        <div
+          className="absolute right-0 top-0 h-full w-1/3"
+          style={{
+            background: "linear-gradient(135deg, transparent 30%, #C8102E 30%)",
+            opacity: 0.15,
+          }}
+        />
+        <div className="relative max-w-6xl mx-auto px-8 py-14">
+          <div className="max-w-xl">
+            <h1 className="text-4xl md:text-5xl font-black text-white leading-tight uppercase tracking-tight">
+              Your Safety Docs,<br />
+              <span className="text-[#C8102E]">Instantly Searchable.</span>
+            </h1>
+            <p className="mt-4 text-white/50 text-base max-w-md">
+              Ask questions about your construction safety documents and get instant, cited answers.
+            </p>
+          </div>
+        </div>
+      </div>
 
-          <div className="flex items-center gap-3">
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto px-8 py-10 space-y-8">
+
+        {/* Two-column: Upload + Ask */}
+        <div className="grid md:grid-cols-5 gap-6">
+
+          {/* Upload Card */}
+          <div className="md:col-span-2 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-5 bg-[#C8102E] rounded-full" />
+              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Upload Documents</h2>
+            </div>
+
+            <p className="text-xs text-gray-500">
+              Upload safety manuals, procedures, or site-specific PDFs to build your knowledge base.
+            </p>
+
+            <input
+              id="pdf-upload"
+              type="file"
+              accept="application/pdf"
+              multiple
+              className="hidden"
+              onChange={(e) => { setFiles(e.target.files); setUploadMsg(null); setUploadSuccess(false); }}
+            />
+
             <label
               htmlFor="pdf-upload"
-              className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-50"
+              className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-[#C8102E] hover:bg-red-50/30 transition-colors"
             >
-              Select PDFs
+              <svg className="w-7 h-7 text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16v-8m0 0l-3 3m3-3l3 3M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1" />
+              </svg>
+              <span className="text-xs text-gray-400">
+                {files && files.length > 0
+                  ? Array.from(files).map(f => f.name).join(", ")
+                  : "Click to select PDFs"}
+              </span>
             </label>
-
-            {files && files.length > 0 && (
-              <ul className="text-sm text-gray-700 list-disc ml-5">
-                {Array.from(files).map((f) => (
-                  <li key={f.name}>{f.name}</li>
-                ))}
-              </ul>
-            )}
 
             <button
               onClick={onUpload}
               disabled={!files || files.length === 0}
-              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black disabled:opacity-50"
+              className="w-full py-2.5 rounded-xl bg-[#C8102E] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#a50d25] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Upload & Index
             </button>
+
+            {uploadMsg && (
+              <div className={`text-xs px-3 py-2 rounded-lg ${uploadSuccess ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>
+                {uploadSuccess ? "✓ " : "✗ "}{uploadMsg}
+              </div>
+            )}
           </div>
 
-          {uploadMsg && (
-            <pre className="text-sm whitespace-pre-wrap bg-gray-100 text-gray-900 p-3 rounded-lg">
-              {uploadMsg}
-            </pre>
-          )}
-        </section>
+          {/* Ask Card */}
+          <div className="md:col-span-3 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-5 bg-[#C8102E] rounded-full" />
+              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Ask a Safety Question</h2>
+            </div>
 
-        {/* Ask Section */}
-        <section className="space-y-3">
-          <label className="block text-sm font-semibold text-gray-700">
-            Ask a question
-          </label>
+            <p className="text-xs text-gray-500">
+              Ask about PPE requirements, procedures, hazard controls, or any safety topic covered in your documents.
+            </p>
 
-          <textarea
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            rows={3}
-            className="w-full rounded-lg border border-gray-300 p-3 text-sm text-gray-900 focus:ring-2 focus:ring-gray-900/20"
-          />
+            <textarea
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) onAsk(); }}
+              rows={5}
+              placeholder="e.g. What PPE is required for grinding operations?"
+              className="w-full rounded-xl border border-gray-200 p-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C8102E]/30 focus:border-[#C8102E] resize-none transition"
+            />
 
-          <div className="flex items-center gap-3">
-            <label className="text-sm text-gray-700">
-              Top K:
-              <input
-                type="number"
-                value={topK}
-                onChange={(e) => setTopK(Number(e.target.value))}
-                className="ml-2 w-16 rounded border border-gray-300 p-1 text-sm"
-              />
-            </label>
-
-            <button
-              onClick={onAsk}
-              disabled={loading}
-              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black disabled:opacity-50"
-            >
-              {loading ? "Asking..." : "Ask"}
-            </button>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-400">⌘ + Enter to submit</span>
+              <button
+                onClick={onAsk}
+                disabled={loading || !question.trim()}
+                className="px-6 py-2.5 rounded-xl bg-[#C8102E] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#a50d25] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    Searching...
+                  </>
+                ) : "Ask"}
+              </button>
+            </div>
           </div>
-        </section>
+        </div>
 
         {/* Error */}
         {err && (
-          <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+          <div className="flex items-start gap-3 rounded-xl bg-red-50 border border-red-100 p-4 text-sm text-red-700">
+            <svg className="w-5 h-5 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
             {err}
           </div>
         )}
 
-        {/* Answer */}
+        {/* Answer Section */}
         {data && (
-          <section className="rounded-lg bg-gray-50 p-4 space-y-4 text-sm text-gray-900">
-            <div>
-              <div className="font-semibold text-gray-900">Answer</div>
-              <pre className="whitespace-pre-wrap">{data.answer}</pre>
+          <div className="grid md:grid-cols-3 gap-6">
+
+            {/* Answer */}
+            <div className="md:col-span-2 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-5 bg-[#C8102E] rounded-full" />
+                <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Answer</h2>
+              </div>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{data.answer}</p>
             </div>
 
-            <div>
-              <div className="font-semibold text-gray-900">Sources</div>
-              <ul className="list-disc ml-5 text-gray-800">
+            {/* Sources */}
+            <div className="bg-[#111111] rounded-2xl p-6 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-5 bg-[#C8102E] rounded-full" />
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Sources</h2>
+              </div>
+              <ul className="space-y-2">
                 {data.retrieved_sources.map((s) => (
-                  <li key={s}>{s}</li>
+                  <li key={s} className="flex items-start gap-2 text-xs text-white/60">
+                    <svg className="w-3.5 h-3.5 mt-0.5 text-[#C8102E] shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                    </svg>
+                    {s}
+                  </li>
                 ))}
               </ul>
             </div>
-          </section>
+
+          </div>
         )}
       </div>
-    </main>
+
+      {/* Footer */}
+      <footer className="mt-16 border-t border-gray-100 py-6 px-8">
+        <div className="max-w-6xl mx-auto flex items-center justify-between text-xs text-gray-400">
+          <span>© {new Date().getFullYear()} Safety Assistant.</span>
+          <span>Answers are grounded in uploaded documents only.</span>
+        </div>
+      </footer>
+
+    </div>
   );
 }

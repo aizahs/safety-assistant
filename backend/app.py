@@ -1,48 +1,34 @@
 import os
 import json
-import re
-import hashlib
-import math
 from typing import List, Dict, Any, Optional
+from dotenv import load_dotenv
+load_dotenv()
 
 from pydantic import BaseModel
-from google import genai 
+from google import genai
+from google.genai import types
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import JSONResponse
 import shutil
 
 from fastapi.middleware.cors import CORSMiddleware
 
-
-
 from ingest import build_index
 
 
 INDEX_FILE = "vector_index.json"
-GEMINI_MODEL = "models/gemini-3-flash-preview"  
-VEC_DIMS = 512
+GEMINI_MODEL = "models/gemini-3-flash-preview"
+EMBED_MODEL = "models/gemini-embedding-001"
 DATA_DIR = "data"
 
 
-
-def tokenize(text: str) -> List[str]:
-    return re.findall(r"[a-zA-Z0-9']+", text.lower())
-
-def embed_text(text: str, dims: int = VEC_DIMS) -> List[float]:
-    vec = [0.0] * dims
-    tokens = tokenize(text)
-    if not tokens:
-        return vec
-
-    for tok in tokens:
-        h = hashlib.md5(tok.encode("utf-8")).hexdigest()
-        idx = int(h, 16) % dims
-        vec[idx] += 1.0
-
-    norm = math.sqrt(sum(v * v for v in vec))
-    if norm > 0:
-        vec = [v / norm for v in vec]
-    return vec
+def embed_query(text: str) -> List[float]:
+    result = embed_client.models.embed_content(
+        model=EMBED_MODEL,
+        contents=text,
+        config=types.EmbedContentConfig(task_type="RETRIEVAL_QUERY"),
+    )
+    return result.embeddings[0].values
 
 def dot(a: List[float], b: List[float]) -> float:
     return sum(x * y for x, y in zip(a, b))
@@ -65,6 +51,7 @@ if not api_key:
     raise RuntimeError("Missing GEMINI_API_KEY. Run: export GEMINI_API_KEY='...'")
 
 client = genai.Client(api_key=api_key)
+embed_client = genai.Client(api_key=api_key)
 
 def call_gemini(prompt: str) -> str:
     resp = client.models.generate_content(
@@ -129,7 +116,7 @@ class JHAReq(BaseModel):
     top_k: Optional[int] = 6
 
 def retrieve(query: str, k: int) -> List[Dict[str, Any]]:
-    qvec = embed_text(query, dims=index["dim"])
+    qvec = embed_query(query)
     texts = index["texts"]
     embeds = index["embeddings"]
     metas = index["metadata"]
